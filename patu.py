@@ -182,7 +182,7 @@ class Patu(object):
                 p.join()
 
 if __name__ == '__main__':
-    parser = OptionParser()
+    parser = OptionParser("usage: %prog [options] url1 url2 urlN ...")
     options_a = [
         ["-s", "--spiders", dict(dest="spiders", type="int", default=1, help="sends more than one spider")],
         ["-S", "--nospinner", dict(dest="spinner", action="store_false", default=True, help="turns off the spinner")],
@@ -196,10 +196,10 @@ if __name__ == '__main__':
     (options, args) = parser.parse_args()
      # Submit first url
     try:
-        urls = [unicode(url) for url in args]
-    except IndexError:
-        print "Give the spiders a URL."
-        sys.exit(1)
+        urls = map(unicode, args)
+        assert len(urls)
+    except AssertionError:
+        parser.error("Give the spider(s) a URL.")
     kwargs = {
         'urls': urls,
         'spiders': options.spiders,
