@@ -2,6 +2,7 @@
 
 import httplib2
 import sys
+import os
 from lxml.html import fromstring
 from optparse import OptionParser
 from multiprocessing import Process, Queue
@@ -27,7 +28,7 @@ class Response(object):
 
 class Patu(object):
 
-    def __init__(self, urls=[], spiders=1, spinner=True, verbose=False, depth=-1, input_file=None, generate=False):
+    def __init__(self, urls=[], spiders=1, spinner=True, verbose=False, depth=-1, input_file=None, generate=False, output_files=False):
         # Set up the multiprocessing bits
         self.processes = []
         self.task_queue = Queue()
@@ -74,6 +75,7 @@ class Patu(object):
         self.verbose = verbose
         self.depth = depth
         self.input_file = input_file
+        self.output_files = output_files
         self.generate = generate
 
     def worker(self):
@@ -109,7 +111,17 @@ class Patu(object):
         except Exception, e:
             print "%s %s" % (type(e), str(e))
             return Response(url)
-
+            
+        if self.output_files:
+            fn,ext = os.path.splitext('_'.join(url.split('/')[3:]))
+            if not fn.strip():
+                fn,ext = 'index','.html'
+            if not ext.strip():
+                ext = '.html'
+            f = open(os.path.join(output_files, fn+ext), 'wb')
+            f.write(content)
+            f.close()
+            
         # Add relevant links
         for link in html.cssselect('a'):
             if not link.attrib.has_key('href'):
@@ -195,6 +207,7 @@ def main():
         ["-d", "--depth", dict(dest="depth", type="int", default=-1, help="does a breadth-first crawl, stopping after DEPTH levels")],
         ['-g', '--generate', dict(dest='generate', action='store_true', default=False, help='generate a list of crawled URLs on stdout')],
         ['-i', '--input', dict(dest='input_file', type='str', default='', help='file of URLs to crawl')],
+        ['-o', '--output', dict(dest='output_files', type='str', default=os.getcwd(), help='output files to this directory')],
     ]
     for s, l, k in options_a:
         parser.add_option(s, l, **k)
@@ -208,6 +221,7 @@ def main():
         'verbose': options.verbose,
         'depth': options.depth,
         'generate': options.generate,
+        'output_files': options.output_files,
         'input_file': options.input_file
     }
     spider = Patu(**kwargs)
