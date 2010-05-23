@@ -121,7 +121,7 @@ class Patu(object):
             f = open(os.path.join(output_files, fn+ext), 'wb')
             f.write(content)
             f.close()
-            
+
         # Add relevant links
         for link in html.cssselect('a'):
             if not link.attrib.has_key('href'):
@@ -199,7 +199,7 @@ class Patu(object):
                 p.join()
 
 def main():
-    parser = OptionParser()
+    parser = OptionParser("usage: %prog [options] url1 url2 urlN ...")
     options_a = [
         ["-s", "--spiders", dict(dest="spiders", type="int", default=1, help="sends more than one spider")],
         ["-S", "--nospinner", dict(dest="spinner", action="store_false", default=True, help="turns off the spinner")],
@@ -213,7 +213,11 @@ def main():
         parser.add_option(s, l, **k)
     (options, args) = parser.parse_args()
      # Submit first url
-    urls = [unicode(url) for url in args]
+    try:
+        urls = map(unicode, args)
+        assert len(urls)
+    except AssertionError:
+        parser.error("Give the spider(s) a URL.")
     kwargs = {
         'urls': urls,
         'spiders': options.spiders,
